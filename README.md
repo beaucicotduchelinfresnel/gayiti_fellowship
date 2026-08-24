@@ -18,4 +18,4 @@ This repository contains the weekly project work and deliverables for the Gayiti
 
 ## Notes
 
-Add your weekly tasks, screenshots, and project outputs in the relevant folders.
+LOCK IN TO GET THINGS DONE
