@@ -1,0 +1,572 @@
+{
+  "name": "Referral Partner Program",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "referral",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -768,
+        0
+      ],
+      "id": "306e37fd-4b9f-4669-a606-53a6a28d5922",
+      "name": "Webhook",
+      "webhookId": "ea39a1ce-31a5-45f0-bdf2-966d5f81d5c1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1uoQsD0WDU8AH9hpe86VH0lnTpTsEtEU85zYYRFfNhu4",
+          "mode": "list",
+          "cachedResultName": "Partner Directory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uoQsD0WDU8AH9hpe86VH0lnTpTsEtEU85zYYRFfNhu4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Feuille 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uoQsD0WDU8AH9hpe86VH0lnTpTsEtEU85zYYRFfNhu4/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "partner_code",
+              "lookupValue": "={{ $json.body.partner_code }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "a1cd93b7-e8c3-46c0-b942-c922ae93de30",
+      "name": "Get row(s) in sheet",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "tWtDhODyKPWs7GRk",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c0fc4302-89f5-4627-93ab-39726fab2508",
+              "leftValue": "={{ $json.partner_code }}",
+              "rightValue": "=",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "a60104fc-99a5-42c0-80d9-e64938a13cf6",
+              "leftValue": "={{ $json.active }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "7b59a602-5390-4070-b316-ca58ed5f3d6d",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c64d0362-8002-4b50-a789-700b68b3db1a",
+              "name": "error",
+              "value": "=Unknown or inactive partner code: {{ $('Webhook').item.json.body.partner_code }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        640,
+        368
+      ],
+      "id": "aaf416c9-6e3a-44b9-9fec-f0656d8e0b1e",
+      "name": "Partner Validation Error"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"error\": \"{{ $json.error }}\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        832,
+        368
+      ],
+      "id": "db1f1081-8e66-4721-8848-6829e38242ef",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1uoQsD0WDU8AH9hpe86VH0lnTpTsEtEU85zYYRFfNhu4",
+          "mode": "list",
+          "cachedResultName": "Partner Directory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uoQsD0WDU8AH9hpe86VH0lnTpTsEtEU85zYYRFfNhu4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1991467463,
+          "mode": "list",
+          "cachedResultName": "Referral Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uoQsD0WDU8AH9hpe86VH0lnTpTsEtEU85zYYRFfNhu4/edit#gid=1991467463"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $now }}",
+            "partner_code": "={{ $('Webhook').item.json.body.partner_code }}",
+            "partner_name": "={{ $json.partner_name }}",
+            "prospect_name": "={{ $('Webhook').item.json.body.prospect.name }}",
+            "prospect_email": "={{ $('Webhook').item.json.body.prospect.email }}",
+            "prospect_phone": "={{ $('Webhook').item.json.body.prospect.phone }}",
+            "intent": "={{ $('Webhook').item.json.body.intent }}",
+            "attribution": "Partner Referral"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "partner_code",
+              "displayName": "partner_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "partner_name",
+              "displayName": "partner_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "prospect_name",
+              "displayName": "prospect_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "prospect_email",
+              "displayName": "prospect_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "prospect_phone",
+              "displayName": "prospect_phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "intent",
+              "displayName": "intent",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "attribution",
+              "displayName": "attribution",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        640,
+        192
+      ],
+      "id": "5d148491-7baa-45db-a978-435cfce754ea",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "tWtDhODyKPWs7GRk",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "mitechbdf@gmail.com",
+        "subject": "=🚨 New Referral Lead — {{ $('Webhook').item.json.body.prospect.name }}",
+        "message": "=New referral received.\n\nPartner:\n{{ $json.partner_name }}\n\nPartner Code:\n{{ $json.partner_code }}\n\nProspect:\n{{ $('Webhook').item.json.body.prospect.name }}\n\nEmail:\n{{ $('Webhook').item.json.body.prospect.email }}\n\nPhone:\n{{ $('Webhook').item.json.body.prospect.phone }}\n\nIntent:\n{{ $('Webhook').item.json.body.intent }}\n\nAttribution:\nPartner Referral",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        624,
+        -464
+      ],
+      "id": "445ab6e2-bf61-4d26-bf62-83082c8ea3e7",
+      "name": "Sales notification",
+      "webhookId": "6a391c20-0b91-4002-875a-ba5a71447125",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "3traDy8ztC8yylm5",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.partner_email }}",
+        "subject": "=Referral received — thank you, {{ $json.partner_name }}",
+        "message": "=Hi {{ $json.partner_name }},  Thank you for submitting a referral.  We have successfully received the referral and our sales team will follow up with the prospect.  Referral: Partner Code: {{ $json.partner_code }} Prospect: {{ $('Webhook').item.json.body.prospect.name }} Intent: {{ $('Webhook').item.json.body.intent }}  Thank you for partnering with us.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        640,
+        -256
+      ],
+      "id": "8531961a-2083-4c4d-bf29-3a0322e80629",
+      "name": "Partner confirmation",
+      "webhookId": "44ed9ed6-4baf-4ada-81ee-d89389ecba30",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "3traDy8ztC8yylm5",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webhook').item.json.body.prospect.email }}",
+        "subject": "Welcome — we received your request",
+        "message": "=Hi {{ $('Webhook').item.json.body.prospect.name }},  Thank you for reaching out to us.  We have received your request regarding {{ $('Webhook').item.json.body.intent }}.  Our team will review your request and contact you shortly.  Best, ABC Insurance",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        656,
+        -80
+      ],
+      "id": "4724e976-7ce7-4243-8ce8-31a831f24931",
+      "name": "Prospect welcome",
+      "webhookId": "f5ca4ae0-ee1c-4d05-9fd4-e0bfd0244037",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "3traDy8ztC8yylm5",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "43fd3ea6-4e2f-471a-bb72-69320b6fc7a9",
+              "leftValue": "={{ $json.body.partner_code }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "014236a1-be55-4bfd-83cc-9ab69eaa4dbb",
+              "leftValue": "={{ $json.body.prospect.name }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "24ed7887-602b-44eb-b33e-693deed3a7c4",
+              "leftValue": "={{ $json.body.prospect.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "46b64947-4405-4589-9f39-f167a367f416",
+              "leftValue": "={{ $json.body.prospect.phone }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "3159bd78-8f31-41db-848f-0e334eb980fa",
+              "leftValue": "={{ $json.body.intent }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -336,
+        0
+      ],
+      "id": "7a39ba9b-af21-49cf-839b-d67bb9192656",
+      "name": "Required Fields Valid"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dbaade1c-726c-4290-92e2-cb971facd3c8",
+              "name": "error",
+              "value": "={{ 'Missing required field: prospect.email' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -176,
+        336
+      ],
+      "id": "7ef0f2b3-e1c9-4735-bc07-f86d4d4b78e4",
+      "name": "Required Fields Error"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ {\n  success: false,\n  error: $json.error\n} }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        80,
+        336
+      ],
+      "id": "484cb6fd-383e-4760-aaf0-65070ccbeb14",
+      "name": "Respond to Webhook1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Required Fields Valid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Sales notification",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Partner confirmation",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prospect welcome",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Partner Validation Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Partner Validation Error": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sales notification": {
+      "main": [
+        []
+      ]
+    },
+    "Required Fields Valid": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Required Fields Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Required Fields Error": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "a922d43b-2cdb-429e-a62e-e4b37cba0e21",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "bc4c239014d9b730468c96d3a10664f2a480aa58647cf6fe7542e713a5a27ef7"
+  },
+  "nodeGroups": [],
+  "id": "99RS1npGeX26pfrI",
+  "tags": []
+}
