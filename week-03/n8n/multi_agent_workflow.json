@@ -1,0 +1,1215 @@
+{
+  "name": "multi_agent_workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "c4fcd812-a985-4de1-92a8-9d316c40e965",
+      "name": "When clicking ‘Execute workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -3184,
+        1680
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0aa5a860-62c3-41b9-b3b2-1d296c2d8656",
+              "name": "chatInput",
+              "value": "Hello, I'm Jean Pierre. I'm looking for an insurance quote. My referral code is PARTNER001. My email is jean@example.com.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "31e3c6e0-7fc1-4ed0-9f55-912166122932",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -2944,
+        1680
+      ]
+    },
+    {
+      "parameters": {
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are the Classifier Agent.\n\nYour ONLY responsibility is to classify the user's request.\n\nDetermine:\n1. intent\n2. category\n3. priority\n4. confidence\n\nAllowed intent examples:\n- request_insurance_quote\n- general_question\n- support_request\n- unknown\n\nAllowed category examples:\n- insurance_quote\n- sales_lead\n- support\n- unknown\n\nPriority must be:\n- low\n- medium\n- high\n\nRules:\n- Do NOT extract personal information.\n- Do NOT make business decisions.\n- Do NOT determine whether a partner is valid.\n- Do NOT write emails or customer messages.\n- Never invent information.\n- If the request is unclear, use \"unknown\".\n- confidence must be a number between 0 and 1.\n- Return only the structured output required by the output parser."
+        }
+      },
+      "id": "c6798869-9eb8-488e-8df6-a129346f5789",
+      "name": "Classifier Agent1",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -2496,
+        1328
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "0287bfd5-bfc4-468b-9a77-b091294da890",
+      "name": "OpenAI Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -2496,
+        1520
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"intent\": \"string\",\n  \"category\": \"string\",\n  \"priority\": \"string\",\n  \"confidence\": \"number\"\n}"
+      },
+      "id": "b3f75381-5a7e-4981-94e2-a46716d70440",
+      "name": "Structured Output Parser1",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -2336,
+        1504
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "deedb62b-f7ae-4571-930e-ebc1bee0f271",
+              "leftValue": "={{ $json.output.intent }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "dac98bfd-ecb9-40c4-ab21-d714f8e3c66d",
+              "leftValue": "={{ $json.output.category }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "35a2ae99-3549-46bf-baa5-f85f21d56180",
+              "leftValue": "={{ $json.output.priority }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "f484ccd2-5daa-48a8-a130-95822f719b5c",
+              "leftValue": "={{ $json.output.confidence }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "207cf65c-8a52-432a-88a7-c9209c65cab7",
+              "leftValue": "={{ $json.output.confidence }}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "af21379c-bcf8-47b5-a525-82f1fcac866b",
+      "name": "Validate Classifier",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2128,
+        1328
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9709dc6b-6542-483f-af20-49380109543b",
+              "name": "output",
+              "value": "={\n  \"intent\": \"unknown\",\n  \"category\": \"unknown\",\n  \"priority\": \"medium\",\n  \"confidence\": 0\n}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f8bfeefe-9848-4479-9f80-e3b04225a6f8",
+      "name": "Classifier Fallback",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -1840,
+        1472
+      ]
+    },
+    {
+      "parameters": {
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are the Extractor Agent.\n\nYour ONLY responsibility is to extract structured information from the user's message.\n\nExtract:\n- full_name\n- email\n- company\n- partner_code\n- request\n\nRules:\n- Do not classify the request.\n- Do not determine priority.\n- Do not make business decisions.\n- Do not recommend actions.\n- Do not write messages.\n- Never invent information.\n- If a field is missing, return an empty string.\n- Return only the required structured JSON output."
+        }
+      },
+      "id": "3c2f7c10-c15f-4c36-a5d9-9a1a5b3b2815",
+      "name": "Extractor Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -2496,
+        1952
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "d2c1ea52-3db8-440d-a413-045ad099d20d",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        -2496,
+        2144
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"full_name\": \"string\",\n  \"email\": \"string\",\n  \"company\": \"string\",\n  \"partner_code\": \"string\",\n  \"request\": \"string\"\n}"
+      },
+      "id": "13c1d3a3-84fe-49c5-9647-8540806cc01d",
+      "name": "Structured Output Parser2",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -2352,
+        2144
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1745ad3e-19d8-48b2-b876-6c18d3bb5b43",
+              "leftValue": "={{ $json.output.full_name }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "4183a04d-d2e6-4f70-a8c5-26739e49a3eb",
+              "leftValue": "={{ $json.output.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "7a07870f-b013-44cb-9030-e2a37dbe8481",
+              "leftValue": "={{ $json.output.partner_code }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "4c619fb6-7072-453c-8581-e0c8ec52c493",
+              "leftValue": "={{ $json.output.request }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "2fefd044-22cb-4a51-8aea-b12434845c01",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "cd26a993-7eef-4d01-88b5-843b93f360c8",
+      "name": "Validate Extractor",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -2128,
+        1952
+      ]
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "cbab6073-11c7-45b3-8392-0181cbc7e278",
+      "name": "Extractor Fallback",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -1856,
+        2096
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "6c92a3aa-7044-4fc4-a1f7-2be3ebf0087c",
+      "name": "Merge Classifier Validation",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1504,
+        1328
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {},
+      "id": "e70d640b-ac3a-45b1-a8f5-dbbc9d1b76a9",
+      "name": "Merge Extractor Validation",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1504,
+        1952
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "3a1761b1-c930-4e16-baf5-450033bff1bb",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1152,
+        1680
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const classifier = $('Merge Classifier Validation').first().json.output || {};\nconst extractor = $('Merge Extractor Validation').first().json.output || {};\n\n// Union both agent outputs under a single \"output\" object.\n// The keys never overlap (classifier: intent/category/priority/confidence,\n// extractor: full_name/email/company/partner_code/request), so nothing is lost.\nreturn [{ json: { output: { ...classifier, ...extractor } } }];"
+      },
+      "id": "4bbcd226-71aa-4909-9bea-eaa2e9c9365e",
+      "name": "Combine Lead Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -944,
+        1792
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "bad5cd0d-b04f-4e7f-a939-7cb15a276070",
+      "name": "Merge1",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -512,
+        1696
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\n// Consider a Google Sheets row valid only when it carries a non-empty partner_code.\nconst match = items.find((i) => {\n  const j = i.json || {};\n  return j.partner_code !== undefined && j.partner_code !== null && String(j.partner_code).trim() !== '';\n});\n\nif (match) {\n  const j = match.json;\n  return [{\n    json: {\n      row_number: j.row_number ?? null,\n      partner_code: j.partner_code ?? '',\n      partner_name: j.partner_name ?? '',\n      partner_email: j.partner_email ?? '',\n      active: j.active ?? false,\n      partner_verified: true,\n    },\n  }];\n}\n\n// No matching / invalid partner: emit the deterministic fallback partner object.\nreturn [{\n  json: {\n    row_number: null,\n    partner_code: '',\n    partner_name: '',\n    partner_email: '',\n    active: false,\n    partner_verified: false,\n  },\n}];"
+      },
+      "id": "e4d5a8ac-fcd3-4326-8368-597e2c89d153",
+      "name": "Partner Lookup Fallback",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -816,
+        1600
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "bfcad504-8322-4961-84a5-96f458ea22af",
+              "leftValue": "={{ $json.output.decision }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "ccc9a407-890b-4e90-95c8-cde4d9247f34",
+              "leftValue": "={{ $json.output.next_action }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "9d244105-b588-4761-9d3f-88b4afb1cbde",
+              "leftValue": "={{ $json.output.notify_sales }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "4b3e2f59-3f5b-4c14-9bb9-82e981578a89",
+              "leftValue": "={{ $json.output.notify_partner }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "e60e2dbd-c5b7-4d19-b1bd-98a17e379ba5",
+              "leftValue": "={{ $json.output.reason }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "dc854aba-a4da-4064-820c-d70ddd744b6e",
+      "name": "Validate Reasoner",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        240,
+        1664
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "25e4e9d0-ea08-4015-a1eb-2c714dc696bb",
+      "name": "Merge Reasoner",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        848,
+        1664
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"output\": {\n    \"decision\": \"NEED_MORE_INFORMATION\",\n    \"next_action\": \"REQUEST_MORE_INFORMATION\",\n    \"notify_sales\": false,\n    \"notify_partner\": false,\n    \"reason\": \"Reasoner validation failed.\"\n  }\n}",
+        "options": {}
+      },
+      "id": "af5c9f3b-1bd5-4e24-bd79-58dca1e46aaf",
+      "name": "Reasoner Fallback",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        544,
+        1760
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is the classified, extracted, and verified partner information:\n\n{{ JSON.stringify($json) }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are the Reasoner Agent.\n\nYour ONLY responsibility is to determine the next workflow action based on the classified request, extracted information, and verified partner information.\n\nThe input contains:\n\n* partner_code, partner_name, partner_email, and active at the top level\n* classified and extracted information inside the \"output\" object\n\nUse the actual partner verification data provided in the input.\n\nDetermine:\n\n1. decision\n2. next_action\n3. notify_sales\n4. notify_partner\n5. reason\n\nPartner verification rules:\n\n* If active is true, the partner is verified and active.\n* If active is false, the partner is not active.\n* If no partner record is found, the partner is unverified.\n\nDecision rules:\n\n* If the partner is verified and active and the lead contains sufficient information to be processed, decision must be QUALIFIED.\n* If the partner is not active or unverified, decision must be NOT_QUALIFIED.\n* If required information is missing, decision must be NEED_MORE_INFORMATION.\n\nAction rules:\n\n* QUALIFIED → PROCESS_LEAD\n* NOT_QUALIFIED → REQUEST_VALID_REFERRAL\n* NEED_MORE_INFORMATION → REQUEST_MORE_INFORMATION\n\nNotification rules:\n\n* If decision is QUALIFIED and next_action is PROCESS_LEAD, notify_sales must be true.\n* If the lead is QUALIFIED and should be processed, notify_partner must be true.\n* If decision is NOT_QUALIFIED, notify_sales must be false and notify_partner must be false.\n* If decision is NEED_MORE_INFORMATION, notify_sales must be false and notify_partner must be false.\n\nGeneral rules:\n\n* Do NOT write customer-facing messages.\n* Do NOT write emails.\n* Do NOT extract information.\n* Do NOT reclassify the request.\n* Do NOT invent information.\n* Base your decision only on the information provided.\n* If required information is missing, request more information.\n* Return only the structured output required by the output parser.\n- Never invent or alter upstream facts.\n- If referring to priority, use exactly the priority provided by the Classifier.\n- If priority is not provided, do not mention priority in the reason.\n"
+        }
+      },
+      "id": "20100e71-9000-4c19-a2c4-8a5d3a1ef9ee",
+      "name": "Reasoner Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -128,
+        1664
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "22bf2ec3-56c9-4626-9da7-5a98c412973d",
+      "name": "OpenAI Chat Model2",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -128,
+        1824
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"decision\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"QUALIFIED\",\n        \"NOT_QUALIFIED\",\n        \"NEED_MORE_INFORMATION\"\n      ]\n    },\n    \"next_action\": {\n      \"type\": \"string\",\n      \"enum\": [\n        \"PROCESS_LEAD\",\n        \"REQUEST_VALID_REFERRAL\",\n        \"REQUEST_MORE_INFORMATION\"\n      ]\n    },\n    \"notify_sales\": {\n      \"type\": \"boolean\"\n    },\n    \"notify_partner\": {\n      \"type\": \"boolean\"\n    },\n    \"reason\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"decision\",\n    \"next_action\",\n    \"notify_sales\",\n    \"notify_partner\",\n    \"reason\"\n  ],\n  \"additionalProperties\": false\n}"
+      },
+      "id": "b18d0266-930e-46ed-b909-352f6519bc75",
+      "name": "Structured Output Parser3",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        16,
+        1824
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $('Combine Lead Data').first().json.output || {};\nconst partner = $('Partner Lookup Fallback').first().json || {};\nconst reasoner = $input.first().json.output || {};\n\n// Rebuild one flat item for the Composer from the real upstream sources.\n// Use ?? so an existing value is never overwritten with an empty value,\n// and nothing is invented (missing fields stay empty).\nreturn [{\n  json: {\n    intent: lead.intent ?? '',\n    category: lead.category ?? '',\n    priority: lead.priority ?? '',\n    confidence: lead.confidence ?? null,\n    classified: {\n      intent: lead.intent ?? '',\n      category: lead.category ?? '',\n      priority: lead.priority ?? '',\n      confidence: lead.confidence ?? null,\n    },\n    full_name: lead.full_name ?? '',\n    email: lead.email ?? '',\n    company: lead.company ?? '',\n    partner_code: lead.partner_code ?? '',\n    request: lead.request ?? '',\n    partner_name: partner.partner_name ?? '',\n    partner_email: partner.partner_email ?? '',\n    active: partner.active ?? false,\n    partner_verified: partner.partner_verified ?? false,\n    decision: reasoner.decision ?? '',\n    next_action: reasoner.next_action ?? '',\n    notify_sales: reasoner.notify_sales ?? false,\n    notify_partner: reasoner.notify_partner ?? false,\n    reason: reasoner.reason ?? '',\n  },\n}];"
+      },
+      "id": "b94f4efa-6546-4cd4-939b-f299249519b6",
+      "name": "Assemble Composer Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        816,
+        1856
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Here is the approved reasoning and workflow information:\n\n{{ JSON.stringify($json) }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are the Composer Agent.\n\nYour ONLY responsibility is to transform the approved Reasoner decision into the final communication payload.\n\nThe input contains:\n\n* the original classified and extracted lead information\n* verified partner information\n* the Reasoner Agent's approved decision\n* the next workflow action\n* notification instructions\n\nCreate a structured communication payload containing:\n\n1. customer_message\n2. sales_email\n3. partner_email\n\nRules:\n\n* Do NOT change the Reasoner Agent's decision.\n* Do NOT change next_action.\n* Do NOT change notify_sales or notify_partner.\n* Do NOT invent missing customer information.\n* Do NOT invent partner information.\n* Do NOT make business decisions.\n* Do NOT reclassify the request.\n* Do NOT perform additional reasoning.\n* Use only information provided in the input.\n* If notify_sales is false, sales_email must contain empty subject and body.\n* If notify_partner is false, partner_email must contain empty subject and body.\n* If the decision is QUALIFIED, create a professional customer message confirming that the request can be processed.\n* Keep customer messages clear and concise.\n* Sales and partner emails must contain only information relevant to their respective recipient.\n* Return only the structured output required by the output parser.\n- Never expose internal workflow terms such as QUALIFIED, PROCESS_LEAD, notify_sales, notify_partner, or internal decision logic to the customer.\n- Use the actual customer name and email provided in the input when composing internal notifications.\n- Do not say that information was \"provided\" if the actual value is available.\n- Customer messages must be written for the customer, not for internal workflow processing.\n"
+        }
+      },
+      "id": "f25e7376-7492-4ae1-8e88-e50b9ae4bf50",
+      "name": "Composer Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1312,
+        1664
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "fc589dcb-7f7c-4a73-a262-784feb7d5e49",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1312,
+        1840
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "={\n  \"type\": \"object\",\n  \"properties\": {\n    \"customer_message\": {\n      \"type\": \"string\"\n    },\n    \"sales_email\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"subject\": {\n          \"type\": \"string\"\n        },\n        \"body\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"subject\",\n        \"body\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"partner_email\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"subject\": {\n          \"type\": \"string\"\n        },\n        \"body\": {\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"subject\",\n        \"body\"\n      ],\n      \"additionalProperties\": false\n    }\n  },\n  \"required\": [\n    \"customer_message\",\n    \"sales_email\",\n    \"partner_email\"\n  ],\n  \"additionalProperties\": false\n}"
+      },
+      "id": "e41e973c-cd82-4070-afca-465da1c0508b",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        1456,
+        1840
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "948e387f-11bd-4a08-a490-ff17882ab73c",
+              "leftValue": "={{ $json.output.customer_message }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "9407f11e-a93a-4eb4-8b00-5cd2949885c4",
+              "leftValue": "={{ $json.output.sales_email.subject }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "f8f2c73c-7263-467b-8ac7-85596cab138d",
+              "leftValue": "={{ $json.output.sales_email.body }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "90895c9a-d415-44af-b269-f19e0763905e",
+              "leftValue": "={{ $json.output.partner_email.subject }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "d417c6a6-48a2-4557-b439-438d931c7b58",
+              "leftValue": "={{ $json.output.partner_email.body }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e1ff10ba-0344-44c1-8136-155428f0a4be",
+      "name": "Validate Composer",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1680,
+        1664
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cb229cc5-0822-4347-9662-e46f4a6153e1",
+              "name": "status",
+              "value": "success",
+              "type": "string"
+            },
+            {
+              "id": "664e7c30-b50a-4603-a42d-e2d1f0c509aa",
+              "name": "customer_message",
+              "value": "={{ $json.output.customer_message }}",
+              "type": "string"
+            },
+            {
+              "id": "5ca66712-ab52-4759-9bb8-0a7522bd7a84",
+              "name": "sales_email",
+              "value": "={{ $json.output.sales_email }}",
+              "type": "object"
+            },
+            {
+              "id": "2c967b15-97a8-4cc4-98a4-72726e391d7b",
+              "name": "partner_email",
+              "value": "={{ $json.output.partner_email }}",
+              "type": "object"
+            },
+            {
+              "id": "8a8ff56c-766a-42ea-a1f1-33aa6d82f791",
+              "name": "decision",
+              "value": "={{ $('Merge Reasoner').item.json.output.decision }}",
+              "type": "string"
+            },
+            {
+              "id": "33fb5932-501d-4d5a-899f-0513ffc35d65",
+              "name": "next_action",
+              "value": "={{ $('Merge Reasoner').item.json.output.next_action }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3df95fbd-66dc-4a12-9a91-219c768b2eee",
+      "name": "Final Output Handling",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        2320,
+        1648
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"output\": {\n    \"customer_message\": \"Thank you for reaching out. We are not able to fully process your request yet because some required details are missing or your referral could not be verified. Could you please reply with your full name, email address, company (if applicable), a valid partner or referral code, and a short description of what you need? Once we have this information we will be happy to continue helping you.\",\n    \"sales_email\": {\n      \"subject\": \"\",\n      \"body\": \"\"\n    },\n    \"partner_email\": {\n      \"subject\": \"\",\n      \"body\": \"\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "id": "65f0fb33-c0ad-41e5-89e6-02f3393a49e6",
+      "name": "Composer Fallback",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        2032,
+        1760
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1uoQsD0WDU8AH9hpe86VH0lnTpTsEtEU85zYYRFfNhu4",
+          "mode": "list",
+          "cachedResultName": "Partner Directory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uoQsD0WDU8AH9hpe86VH0lnTpTsEtEU85zYYRFfNhu4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Feuille 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uoQsD0WDU8AH9hpe86VH0lnTpTsEtEU85zYYRFfNhu4/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "partner_code",
+              "lookupValue": "={{ $json.output.partner_code }}"
+            }
+          ]
+        },
+        "combineFilters": "OR",
+        "options": {}
+      },
+      "id": "07608db5-aacf-4a0b-b66b-c482180aeb2d",
+      "name": "Partner Lookup",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1040,
+        1408
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "oGdGtZPv8dbOyxxZ",
+          "name": "Google Sheets account 3"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Classifier Agent1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extractor Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classifier Agent1": {
+      "main": [
+        [
+          {
+            "node": "Validate Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Classifier Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Classifier Agent1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Classifier": {
+      "main": [
+        [
+          {
+            "node": "Merge Classifier Validation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Classifier Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classifier Fallback": {
+      "main": [
+        [
+          {
+            "node": "Merge Classifier Validation",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Extractor Agent": {
+      "main": [
+        [
+          {
+            "node": "Validate Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extractor Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Extractor Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Extractor": {
+      "main": [
+        [
+          {
+            "node": "Merge Extractor Validation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extractor Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extractor Fallback": {
+      "main": [
+        [
+          {
+            "node": "Merge Extractor Validation",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Classifier Validation": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Extractor Validation": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Combine Lead Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Lead Data": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          },
+          {
+            "node": "Partner Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Reasoner Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Partner Lookup Fallback": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Reasoner": {
+      "main": [
+        [
+          {
+            "node": "Merge Reasoner",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reasoner Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Reasoner": {
+      "main": [
+        [
+          {
+            "node": "Assemble Composer Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reasoner Fallback": {
+      "main": [
+        [
+          {
+            "node": "Merge Reasoner",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Reasoner Agent": {
+      "main": [
+        [
+          {
+            "node": "Validate Reasoner",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Reasoner Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser3": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Reasoner Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assemble Composer Context": {
+      "main": [
+        [
+          {
+            "node": "Composer Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Composer Agent": {
+      "main": [
+        [
+          {
+            "node": "Validate Composer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Composer Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Composer Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Composer": {
+      "main": [
+        [
+          {
+            "node": "Final Output Handling",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Composer Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Composer Fallback": {
+      "main": [
+        [
+          {
+            "node": "Final Output Handling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Partner Lookup": {
+      "main": [
+        [
+          {
+            "node": "Partner Lookup Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f26e74a3-fc9f-489a-9e4c-fe3bedcdb421",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1ce08e6666de8e5fa0dbf4ee0d6d4bc8f68c11fdfb61bcf3420034f6823d1683"
+  },
+  "nodeGroups": [],
+  "id": "Koz6UIkitbZDaA8C",
+  "tags": []
+}

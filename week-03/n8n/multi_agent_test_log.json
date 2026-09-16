@@ -1,0 +1,237 @@
+﻿{
+  "test_cases": [
+    {
+      "test_case": "Run 1 - Valid Partner",
+      "input": "Hello, I'm Jean Pierre. I'm looking for an insurance quote. My referral code is PARTNER001. My email is jean@example.com.",
+      "trace": {
+        "classifier": {
+          "action": "parse",
+          "response": {
+            "output": {
+              "intent": "request_insurance_quote",
+              "category": "insurance_quote",
+              "priority": "medium",
+              "confidence": 0.95
+            }
+          }
+        },
+        "extractor": {
+          "action": "parse",
+          "response": {
+            "output": {
+              "email": "jean@example.com",
+              "partner_code": "PARTNER001",
+              "request": "I'm looking for an insurance quote.",
+              "full_name": "Jean Pierre",
+              "company": ""
+            }
+          }
+        },
+        "partner_lookup": {
+          "row_number": 2,
+          "partner_code": "PARTNER001",
+          "partner_name": "ABC Insurance",
+          "partner_email": "mitechbdf@gmail.com",
+          "active": true
+        },
+        "reasoner": {
+          "action": "parse",
+          "response": {
+            "output": {
+              "decision": "QUALIFIED",
+              "next_action": "PROCESS_LEAD",
+              "notify_sales": true,
+              "notify_partner": true,
+              "reason": "Partner PARTNER001 (ABC Insurance) is verified and active. The lead includes a full name (Jean Pierre), a contact email (jean@example.com), and an explicit insurance quote request, which is sufficient to begin processing."
+            }
+          }
+        },
+        "composer": {
+          "action": "parse",
+          "response": {
+            "output": {
+              "customer_message": "Hi Jean Pierre,\n\nThanks for requesting an insurance quote. We can proceed and will process your request. A representative from ABC Insurance will contact you at jean@example.com with the quote. If your contact details or request need updating, please reply to this email.\n\nThank you.",
+              "sales_email": {
+                "subject": "New Lead — Jean Pierre (Insurance Quote) — ABC Insurance (PARTNER001)",
+                "body": "Lead details:\n- Name: Jean Pierre\n- Email: jean@example.com\n- Company: (none)\n- Request: I'm looking for an insurance quote.\n- Priority: medium\n- Confidence: 0.95\n\nPartner:\n- Name: ABC Insurance\n- Partner code: PARTNER001\n- Partner email: mitechbdf@gmail.com\n- Active: true\n- Verified: true\n\nDecision: QUALIFIED\nNext action: PROCESS_LEAD\n\nPlease proceed with lead handling."
+              },
+              "partner_email": {
+                "subject": "New Lead: Jean Pierre — Insurance Quote",
+                "body": "Hello ABC Insurance team,\n\nYou have a new lead to handle.\n\nCustomer:\n- Name: Jean Pierre\n- Email: jean@example.com\n- Request: I'm looking for an insurance quote.\n- Priority: medium\n- Confidence: 0.95\n\nPartner code: PARTNER001\nPartner email on record: mitechbdf@gmail.com\nPartner status: active, verified\n\nDecision: QUALIFIED\nNext action: PROCESS_LEAD\n\nPlease follow up with the customer to provide the insurance quote."
+              }
+            }
+          }
+        }
+      },
+      "final_output": [
+        {
+          "status": "success",
+          "customer_message": "Hi Jean Pierre,\n\nThanks for requesting an insurance quote. We can proceed and will process your request. A representative from ABC Insurance will contact you at jean@example.com with the quote. If your contact details or request need updating, please reply to this email.\n\nThank you.",
+          "sales_email": {
+            "subject": "New Lead — Jean Pierre (Insurance Quote) — ABC Insurance (PARTNER001)",
+            "body": "Lead details:\n- Name: Jean Pierre\n- Email: jean@example.com\n- Company: (none)\n- Request: I'm looking for an insurance quote.\n- Priority: medium\n- Confidence: 0.95\n\nPartner:\n- Name: ABC Insurance\n- Partner code: PARTNER001\n- Partner email: mitechbdf@gmail.com\n- Active: true\n- Verified: true\n\nDecision: QUALIFIED\nNext action: PROCESS_LEAD\n\nPlease proceed with lead handling."
+          },
+          "partner_email": {
+            "subject": "New Lead: Jean Pierre — Insurance Quote",
+            "body": "Hello ABC Insurance team,\n\nYou have a new lead to handle.\n\nCustomer:\n- Name: Jean Pierre\n- Email: jean@example.com\n- Request: I'm looking for an insurance quote.\n- Priority: medium\n- Confidence: 0.95\n\nPartner code: PARTNER001\nPartner email on record: mitechbdf@gmail.com\nPartner status: active, verified\n\nDecision: QUALIFIED\nNext action: PROCESS_LEAD\n\nPlease follow up with the customer to provide the insurance quote."
+          },
+          "decision": "QUALIFIED",
+          "next_action": "PROCESS_LEAD"
+        }
+      ]
+    },
+    {
+      "test_case": "Run 2 — Invalid partner",
+      "input": "Hello, I'm Marie. I need an insurance quote for my company. My referral code is FAKE999. My email is marie@example.com.",
+      "trace": {
+        "classifier": {
+          "output": {
+            "intent": "request_insurance_quote",
+            "category": "insurance_quote",
+            "priority": "medium",
+            "confidence": 0.95
+          }
+        },
+        "extractor": {
+          "action": "parse",
+          "response": {
+            "output": {
+              "partner_code": "FAKE999",
+              "email": "marie@example.com",
+              "company": "",
+              "request": "I need an insurance quote for my company.",
+              "full_name": "Marie"
+            }
+          }
+        },
+        "partner_lookup": [
+          {
+            "row_number": 4,
+            "partner_code": "FAKE999",
+            "partner_name": "—",
+            "partner_email": "",
+            "active": false
+          }
+        ],
+        "reasoner": {
+          "action": "parse",
+          "response": {
+            "output": {
+              "decision": "NOT_QUALIFIED",
+              "next_action": "REQUEST_VALID_REFERRAL",
+              "notify_sales": false,
+              "notify_partner": false,
+              "reason": "Partner record 'FAKE999' is verified but marked inactive (active=false). Because the partner is not active, the lead cannot be processed through this partner; request a valid referral."
+            }
+          }
+        },
+        "composer": {
+          "action": "parse",
+          "response": {
+            "output": {
+              "customer_message": "Hi Marie,\n\nThanks for reaching out. We’re unable to process your insurance quote using partner code FAKE999 because that partner is currently inactive. Please reply with an alternate active partner (name and contact) or let us know if you’d like us to proceed directly with a quote. If you choose to proceed directly, please provide your company details and the coverage you need and we’ll move forward.",
+              "sales_email": {
+                "subject": "",
+                "body": ""
+              },
+              "partner_email": {
+                "subject": "",
+                "body": ""
+              }
+            }
+          }
+        }
+      },
+      "final_output": [
+        {
+          "status": "success",
+          "customer_message": "Thank you for reaching out. We are not able to fully process your request yet because some required details are missing or your referral could not be verified. Could you please reply with your full name, email address, company (if applicable), a valid partner or referral code, and a short description of what you need? Once we have this information we will be happy to continue helping you.",
+          "sales_email": {
+            "subject": "",
+            "body": ""
+          },
+          "partner_email": {
+            "subject": "",
+            "body": ""
+          },
+          "decision": "NOT_QUALIFIED",
+          "next_action": "REQUEST_VALID_REFERRAL"
+        }
+      ]
+    },
+    {
+      "test_case": "Run 3 — Missing partner code",
+      "input": "Hello, I'm David. I need an insurance quote for my company. My email is david@example.com.",
+      "trace": {
+        "classifier": {
+          "action": "parse",
+          "response": {
+            "output": {
+              "intent": "request_insurance_quote",
+              "category": "insurance_quote",
+              "priority": "medium",
+              "confidence": 0.9
+            }
+          }
+        },
+        "extractor": {
+          "action": "parse",
+          "response": {
+            "output": {
+              "email": "david@example.com",
+              "full_name": "David",
+              "partner_code": "",
+              "company": "",
+              "request": "I need an insurance quote for my company."
+            }
+          }
+        },
+        "partner_lookup": {},
+        "reasoner": {
+          "action": "parse",
+          "response": {
+            "output": {
+              "decision": "NOT_QUALIFIED",
+              "next_action": "REQUEST_VALID_REFERRAL",
+              "notify_sales": false,
+              "notify_partner": false,
+              "reason": "Partner is not active or verified (active=false, partner_verified=false). Per verification rules, the lead cannot be processed through this partner — request a valid referral."
+            }
+          }
+        },
+        "composer": {
+          "action": "parse",
+          "response": {
+            "output": {
+              "customer_message": "We’re unable to process your insurance quote through the current partner referral because the partner is not active and verified. Please reply with an alternative, active partner (name and contact email), or let us know if you’d like help finding a verified partner so we can continue your request.",
+              "sales_email": {
+                "subject": "",
+                "body": ""
+              },
+              "partner_email": {
+                "subject": "",
+                "body": ""
+              }
+            }
+          }
+        }
+      },
+      "final_output": [
+        {
+          "status": "success",
+          "customer_message": "Thank you for reaching out. We are not able to fully process your request yet because some required details are missing or your referral could not be verified. Could you please reply with your full name, email address, company (if applicable), a valid partner or referral code, and a short description of what you need? Once we have this information we will be happy to continue helping you.",
+          "sales_email": {
+            "subject": "",
+            "body": ""
+          },
+          "partner_email": {
+            "subject": "",
+            "body": ""
+          },
+          "decision": "NOT_QUALIFIED",
+          "next_action": "REQUEST_VALID_REFERRAL"
+        }
+      ]
+    }
+  ]
+}
